@@ -17,7 +17,7 @@ async function bootstrap() {
   await app.listen(3000, '0.0.0.0');
 
   console.log(`🚀 Server running on http://localhost:3000`);
-  console.log(`📊 GraphQL playground on http://localhost:3000/graphql`);
+  console.log(`📊 GraphQL endpoint on http://localhost:3000/graphql`);
 }
 
 bootstrap();
