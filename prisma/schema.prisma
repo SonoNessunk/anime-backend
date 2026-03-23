@@ -1,0 +1,302 @@
+// ============================================================
+// PRISMA SCHEMA — Anime/Manga Backend
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum MediaType {
+  ANIME
+  MANGA
+  NOVEL
+}
+
+enum MediaStatus {
+  FINISHED       // completato
+  RELEASING      // in corso
+  NOT_YET_RELEASED
+  CANCELLED
+  HIATUS
+}
+
+enum MediaSeason {
+  WINTER
+  SPRING
+  SUMMER
+  FALL
+}
+
+enum UserMediaStatus {
+  WATCHING       // per anime
+  READING        // per manga/novel
+  COMPLETED
+  PAUSED
+  DROPPED
+  PLANNING
+}
+
+// ============================================================
+// MEDIA (anime, manga, novel — tabella unica con type)
+// ============================================================
+
+model Media {
+  id              Int          @id @default(autoincrement())
+  type            MediaType
+  status          MediaStatus  @default(NOT_YET_RELEASED)
+
+  // Titoli
+  titleRomaji     String       // titolo in romaji, es. "Shingeki no Kyojin"
+  titleEnglish    String?      // titolo inglese, es. "Attack on Titan"
+  titleNative     String?      // titolo originale, es. "進撃の巨人"
+  synonyms        String[]     // titoli alternativi
+
+  // Dettagli
+  description     String?
+  coverImage      String?      // path/URL immagine copertina
+  bannerImage     String?
+  isAdult         Boolean      @default(false)
+
+  // Solo per ANIME
+  episodes        Int?         // numero episodi totali
+  duration        Int?         // durata episodio in minuti
+  season          MediaSeason?
+  seasonYear      Int?
+
+  // Solo per MANGA/NOVEL
+  chapters        Int?         // numero capitoli totali
+  volumes         Int?
+
+  // ID esterni per sync con AniList, MAL etc.
+  anilistId       Int?         @unique
+  malId           Int?         @unique
+
+  // Punteggi
+  averageScore    Float?       // media dei voti utenti (0-100)
+  popularity      Int?         @default(0)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relazioni
+  genres          Genre[]      @relation("MediaGenres")
+  tags            Tag[]        @relation("MediaTags")
+  characters      CharacterOnMedia[]
+  staff           StaffOnMedia[]
+  studios         StudioOnMedia[]
+  userEntries     UserMediaEntry[]
+  episodes_list   Episode[]    // lista episodi (solo anime)
+  chapters_list   Chapter[]    // lista capitoli (solo manga/novel)
+
+  @@index([type])              // indice per filtrare per tipo velocemente
+  @@index([status])
+  @@index([titleRomaji])       // indice per la ricerca per titolo
+}
+
+// ============================================================
+// EPISODE (episodi di un anime)
+// ============================================================
+
+model Episode {
+  id          Int      @id @default(autoincrement())
+  mediaId     Int
+  number      Int      // numero episodio
+  title       String?
+  description String?
+  duration    Int?     // durata in minuti
+  airDate     DateTime?
+  thumbnail   String?
+
+  media       Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  // onDelete: Cascade — se il Media viene eliminato, elimina anche tutti gli episodi
+
+  @@unique([mediaId, number])  // non possono esistere due episodi con lo stesso numero per lo stesso media
+  @@index([mediaId])
+}
+
+// ============================================================
+// CHAPTER (capitoli di un manga/novel)
+// ============================================================
+
+model Chapter {
+  id          Int      @id @default(autoincrement())
+  mediaId     Int
+  number      Float    // Float per supportare capitoli come 10.5
+  title       String?
+  pages       Int?
+  publishDate DateTime?
+
+  media       Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  readingHistory ReadingHistory[]
+
+  @@unique([mediaId, number])
+  @@index([mediaId])
+}
+
+// ============================================================
+// GENRE e TAG
+// ============================================================
+
+model Genre {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique  // es. "Action", "Romance", "Shonen"
+  media Media[] @relation("MediaGenres")
+}
+
+model Tag {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique  // es. "Time Travel", "Overpowered MC"
+  description String?
+  isAdult     Boolean @default(false)
+  media       Media[] @relation("MediaTags")
+}
+
+// ============================================================
+// CHARACTER
+// ============================================================
+
+model Character {
+  id          Int      @id @default(autoincrement())
+  name        String
+  nameNative  String?  // nome in giapponese
+  description String?
+  image       String?
+  anilistId   Int?     @unique
+
+  media       CharacterOnMedia[]
+}
+
+// Tabella di giunzione Media <-> Character (many-to-many con dati extra)
+model CharacterOnMedia {
+  mediaId     Int
+  characterId Int
+  role        String   // es. "MAIN", "SUPPORTING", "BACKGROUND"
+
+  media       Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, characterId])  // chiave primaria composta
+}
+
+// ============================================================
+// STAFF (autori, registi, doppiatori etc.)
+// ============================================================
+
+model Staff {
+  id          Int      @id @default(autoincrement())
+  name        String
+  nameNative  String?
+  description String?
+  image       String?
+  anilistId   Int?     @unique
+
+  media       StaffOnMedia[]
+}
+
+model StaffOnMedia {
+  mediaId  Int
+  staffId  Int
+  role     String   // es. "Director", "Original Creator", "Voice Actor"
+
+  media    Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  staff    Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, staffId, role])  // stesso staff può avere ruoli diversi nello stesso media
+}
+
+// ============================================================
+// STUDIO
+// ============================================================
+
+model Studio {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  isAnimation Boolean @default(true)  // false = studio di produzione, non animazione
+  anilistId   Int?    @unique
+
+  media       StudioOnMedia[]
+}
+
+model StudioOnMedia {
+  mediaId    Int
+  studioId   Int
+  isMain     Boolean @default(false)  // studio principale vs partner
+
+  media      Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  studio     Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, studioId])
+}
+
+// ============================================================
+// USER
+// ============================================================
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String   // mai salvare la password in chiaro!
+  avatar       String?
+  bio          String?
+  isAdmin      Boolean  @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relazioni
+  mediaList    UserMediaEntry[]
+  readingHistory ReadingHistory[]
+}
+
+// ============================================================
+// USER MEDIA ENTRY (lista personale dell'utente)
+// ============================================================
+
+model UserMediaEntry {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  mediaId   Int
+  status    UserMediaStatus
+  score     Float?          // voto dell'utente (es. 0-10)
+  progress  Int             @default(0)  // episodio/capitolo corrente
+  notes     String?
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media     Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mediaId])  // un utente può avere solo una entry per media
+  @@index([userId])
+  @@index([mediaId])
+}
+
+// ============================================================
+// READING HISTORY (per il reader — tiene traccia della pagina)
+// ============================================================
+
+model ReadingHistory {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  chapterId   Int
+  currentPage Int      @default(1)
+  readAt      DateTime @default(now())
+
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter     Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chapterId])
+}

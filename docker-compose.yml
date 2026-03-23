@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    # alpine = versione minimale dell'immagine, meno spazio su disco
+    container_name: anime_postgres
+    restart: unless-stopped
+    # unless-stopped = riparte automaticamente se crasha, ma non se lo stoppi manualmente
+    environment:
+      POSTGRES_USER: anime_user
+      POSTGRES_PASSWORD: anime_password
+      POSTGRES_DB: anime_db
+    ports:
+      - "5432:5432"
+      # host:container — mappa la porta 5432 del container sulla 5432 del tuo PC
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # volume persistente — i dati sopravvivono anche se il container viene rimosso
+
+  redis:
+    image: redis:7-alpine
+    container_name: anime_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    # --appendonly yes  abilita la persistenza su disco (AOF - Append Only File)
+
+  typesense:
+      image: typesense/typesense:27.1
+      container_name: anime_typesense
+      restart: unless-stopped
+      ports:
+        - "8108:8108"
+      volumes:
+        - typesense_data:/data
+      command: ["--data-dir", "/data", "--api-key=anime_typesense_key", "--enable-cors"]
+
+volumes:
+  postgres_data:
+  redis_data:
+  typesense_data:
+  # volumi nominati — Docker li gestisce autonomamente in /var/lib/docker/volumes/
