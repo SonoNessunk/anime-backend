@@ -24,4 +24,4 @@ async function bootstrap() {
   console.log(`📊 GraphQL endpoint on http://localhost:3000/graphql`);
 }
 
-bootstrap();
+void bootstrap();

@@ -7,6 +7,7 @@ import { MediaModule } from './media/media.module';
 import { ConfigModule } from '@nestjs/config';
 import { AnilistModule } from './anilist/anilist.module';
 import { AuthModule } from './auth/auth.module';
+import { UserListModule } from './user-list/user-list.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AuthModule } from './auth/auth.module';
     MediaModule,
     AnilistModule,
     AuthModule,
+    UserListModule,
   ],
   providers: [AppResolver],
 })
