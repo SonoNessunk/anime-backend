@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { MediaModule } from './media/media.module';
 import { ConfigModule } from '@nestjs/config';
 import { AnilistModule } from './anilist/anilist.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -14,10 +15,14 @@ import { AnilistModule } from './anilist/anilist.module';
       driver: MercuriusDriver,
       graphiql: true,
       autoSchemaFile: true,
+      context: (request: any, reply: any) => {
+        return { request, reply };
+      },
     }),
     PrismaModule,
     MediaModule,
     AnilistModule,
+    AuthModule,
   ],
   providers: [AppResolver],
 })
