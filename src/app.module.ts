@@ -5,6 +5,7 @@ import { AppResolver } from './app.resolver';
 import { PrismaModule } from './prisma/prisma.module';
 import { MediaModule } from './media/media.module';
 import { ConfigModule } from '@nestjs/config';
+import { AnilistModule } from './anilist/anilist.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ConfigModule } from '@nestjs/config';
     }),
     PrismaModule,
     MediaModule,
+    AnilistModule,
   ],
   providers: [AppResolver],
 })
