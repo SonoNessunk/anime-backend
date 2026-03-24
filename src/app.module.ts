@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AnilistModule } from './anilist/anilist.module';
 import { AuthModule } from './auth/auth.module';
 import { UserListModule } from './user-list/user-list.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UserListModule } from './user-list/user-list.module';
     AnilistModule,
     AuthModule,
     UserListModule,
+    SearchModule,
   ],
   providers: [AppResolver],
 })
