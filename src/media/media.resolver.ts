@@ -2,6 +2,7 @@ import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { MediaType } from '../../generated/prisma';
 import { MediaModel } from './models/media.model';
 import { MediaService } from './media.service';
+import { PaginatedMedia } from './models/paginated-media.model';
 
 @Resolver(() => MediaModel)
 // @Resolver dice a GraphQL che questo class gestisce le operazioni per il tipo MediaModel
@@ -45,5 +46,15 @@ export class MediaResolver {
       episodes,
       chapters,
     });
+  }
+
+  @Query(() => PaginatedMedia)
+  async mediasPaginated(
+    @Args('type', { type: () => MediaType, nullable: true }) type?: MediaType,
+    @Args('search', { nullable: true }) search?: string,
+    @Args('page', { type: () => Int, nullable: true }) page?: number,
+    @Args('perPage', { type: () => Int, nullable: true }) perPage?: number,
+  ) {
+    return this.mediaService.findAllPaginated({ type, search, page, perPage });
   }
 }

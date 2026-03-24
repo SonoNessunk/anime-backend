@@ -12,6 +12,10 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  app.enableCors({
+    origin: true,
+  });
+
   // Ascolta su tutte le interfacce di rete (0.0.0.0) invece di solo localhost
   // necessario per Docker e deploy futuri
   await app.listen(3000, '0.0.0.0');

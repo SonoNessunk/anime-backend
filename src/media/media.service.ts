@@ -53,4 +53,49 @@ export class MediaService {
   }) {
     return this.prisma.media.create({ data });
   }
+
+  async findAllPaginated(filters?: {
+    type?: MediaType;
+    search?: string;
+    page?: number;
+    perPage?: number;
+  }) {
+    const page = filters?.page ?? 1;
+    const perPage = filters?.perPage ?? 25;
+    const skip = (page - 1) * perPage;
+    // skip = quanti record saltare — es. pagina 3 con 25 perPage → skip 50
+
+    const where = {
+      type: filters?.type,
+      titleRomaji: filters?.search
+        ? { contains: filters.search, mode: 'insensitive' as const }
+        : undefined,
+    };
+
+    // Eseguiamo due query in parallelo con Promise.all per efficienza
+    const [items, total] = await Promise.all([
+      this.prisma.media.findMany({
+        where,
+        take: perPage,
+        skip,
+        orderBy: { popularity: 'desc' },
+      }),
+      this.prisma.media.count({ where }),
+      // count = conta i record totali che matchano il filtro
+    ]);
+
+    const totalPages = Math.ceil(total / perPage);
+
+    return {
+      items,
+      pageInfo: {
+        total,
+        page,
+        perPage,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
 }

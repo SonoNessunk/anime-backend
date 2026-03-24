@@ -172,7 +172,7 @@ export class AnilistService {
       if (!pageInfo.hasNextPage) break;
 
       // Aspettiamo 1 secondo tra una pagina e l'altra per non spammare l'API AniList
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 10000));
     }
 
     this.logger.log(`Sync complete! Synced ${synced} ${type} entries.`);
