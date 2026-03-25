@@ -59,17 +59,31 @@ export class MediaService {
     search?: string;
     page?: number;
     perPage?: number;
+    sort?: 'popularity' | 'score' | 'title' | 'id';
+    order?: 'asc' | 'desc';
   }) {
     const page = filters?.page ?? 1;
     const perPage = filters?.perPage ?? 25;
     const skip = (page - 1) * perPage;
     // skip = quanti record saltare — es. pagina 3 con 25 perPage → skip 50
 
+    const sortMap = {
+      popularity: { popularity: filters?.order ?? 'desc' },
+      score: { averageScore: filters?.order ?? 'desc' },
+      title: { titleRomaji: filters?.order ?? 'asc' },
+      id: { id: filters?.order ?? 'asc' },
+    };
+
+    const orderBy = sortMap[filters?.sort ?? 'popularity'];
+
     const where = {
       type: filters?.type,
       titleRomaji: filters?.search
         ? { contains: filters.search, mode: 'insensitive' as const }
         : undefined,
+      ...(filters?.sort === 'score' && {
+        averageScore: { not: null },
+      }),
     };
 
     // Eseguiamo due query in parallelo con Promise.all per efficienza
@@ -78,7 +92,7 @@ export class MediaService {
         where,
         take: perPage,
         skip,
-        orderBy: { popularity: 'desc' },
+        orderBy,
       }),
       this.prisma.media.count({ where }),
       // count = conta i record totali che matchano il filtro

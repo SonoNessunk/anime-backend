@@ -15,6 +15,7 @@ export class MediaResolver {
     @Args('type', { type: () => MediaType, nullable: true }) type?: MediaType,
     @Args('search', { nullable: true }) search?: string,
     @Args('limit', { type: () => Int, nullable: true }) limit?: number,
+
     // @Args mappa gli argomenti GraphQL ai parametri della funzione
   ) {
     return this.mediaService.findAll({ type, search, limit });
@@ -54,7 +55,17 @@ export class MediaResolver {
     @Args('search', { nullable: true }) search?: string,
     @Args('page', { type: () => Int, nullable: true }) page?: number,
     @Args('perPage', { type: () => Int, nullable: true }) perPage?: number,
+    @Args('sort', { nullable: true })
+    sort?: 'popularity' | 'score' | 'title' | 'id',
+    @Args('order', { nullable: true }) order?: 'asc' | 'desc',
   ) {
-    return this.mediaService.findAllPaginated({ type, search, page, perPage });
+    return this.mediaService.findAllPaginated({
+      type,
+      search,
+      page,
+      perPage,
+      sort,
+      order,
+    });
   }
 }

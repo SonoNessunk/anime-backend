@@ -13,7 +13,7 @@ const MEDIA_QUERY = `
         hasNextPage
         currentPage
       }
-      media(type: $type, sort: POPULARITY_DESC) {
+      media(type: $type, sort: ID) {
         id
         type
         status
@@ -94,7 +94,7 @@ export class AnilistService {
     const mediaType = type === 'ANIME' ? MediaType.ANIME : MediaType.MANGA;
     let synced = 0;
 
-    for (let page = 1; page <= pages; page++) {
+    for (let page = 540; page <= pages; page++) {
       this.logger.log(`Syncing ${type} page ${page}/${pages}...`);
 
       const { media, pageInfo } = await this.fetchPage(type, page);
@@ -172,7 +172,7 @@ export class AnilistService {
       if (!pageInfo.hasNextPage) break;
 
       // Aspettiamo 1 secondo tra una pagina e l'altra per non spammare l'API AniList
-      await new Promise((r) => setTimeout(r, 10000));
+      await new Promise((r) => setTimeout(r, 1000));
     }
 
     this.logger.log(`Sync complete! Synced ${synced} ${type} entries.`);
