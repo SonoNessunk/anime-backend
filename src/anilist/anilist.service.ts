@@ -94,7 +94,7 @@ export class AnilistService {
     const mediaType = type === 'ANIME' ? MediaType.ANIME : MediaType.MANGA;
     let synced = 0;
 
-    for (let page = 540; page <= pages; page++) {
+    for (let page = 1; page <= pages; page++) {
       this.logger.log(`Syncing ${type} page ${page}/${pages}...`);
 
       const { media, pageInfo } = await this.fetchPage(type, page);
