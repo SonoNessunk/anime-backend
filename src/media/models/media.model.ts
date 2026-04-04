@@ -14,6 +14,15 @@ registerEnumType(MediaStatus, { name: 'MediaStatus' });
 registerEnumType(MediaSeason, { name: 'MediaSeason' });
 
 @ObjectType()
+export class GenreModel {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  name: string;
+}
+
+@ObjectType()
 // @ObjectType dice a GraphQL che questa classe è un tipo restituibile nelle query
 export class MediaModel {
   @Field(() => Int)
@@ -49,6 +58,9 @@ export class MediaModel {
 
   @Field({ nullable: true })
   bannerImage?: string;
+
+  @Field(() => [GenreModel], { nullable: true })
+  genres?: GenreModel[];
 
   @Field()
   isAdult: boolean;

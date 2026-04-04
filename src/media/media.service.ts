@@ -61,6 +61,7 @@ export class MediaService {
     perPage?: number;
     sort?: 'popularity' | 'score' | 'title' | 'id';
     order?: 'asc' | 'desc';
+    genre?: string;
   }) {
     const page = filters?.page ?? 1;
     const perPage = filters?.perPage ?? 25;
@@ -81,6 +82,7 @@ export class MediaService {
       titleRomaji: filters?.search
         ? { contains: filters.search, mode: 'insensitive' as const }
         : undefined,
+      genres: filters?.genre ? { some: { name: filters.genre } } : undefined,
       ...(filters?.sort === 'score' && {
         averageScore: { not: null },
       }),
@@ -93,6 +95,7 @@ export class MediaService {
         take: perPage,
         skip,
         orderBy,
+        include: { genres: true },
       }),
       this.prisma.media.count({ where }),
       // count = conta i record totali che matchano il filtro
@@ -111,5 +114,11 @@ export class MediaService {
         hasPrevPage: page > 1,
       },
     };
+  }
+
+  async findAllGenres() {
+    return this.prisma.genre.findMany({
+      orderBy: { name: 'asc' },
+    });
   }
 }

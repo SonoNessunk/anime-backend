@@ -5,10 +5,14 @@ import { AuthPayload, UserModel } from './models/auth.model';
 import { RegisterInput, LoginInput } from './models/auth.inputs';
 import { CurrentUser } from './current-user.decorator';
 import { GqlAuthGuard } from './gql-auth.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Resolver()
 export class AuthResolver {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private prisma: PrismaService,
+  ) {}
 
   @Mutation(() => AuthPayload)
   async register(@Args('input') input: RegisterInput): Promise<AuthPayload> {
@@ -26,5 +30,25 @@ export class AuthResolver {
   async me(@CurrentUser() user: UserModel): Promise<UserModel> {
     // @CurrentUser è un decorator custom che estrae l'utente dalla request
     return user;
+  }
+
+  @Query(() => [UserModel])
+  @UseGuards(GqlAuthGuard)
+  async users(@CurrentUser() user: any) {
+    if (!user.isAdmin) throw new Error('Non autorizzato');
+    return this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      // null → undefined per compatibilità con UserModel
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        avatar: true,
+        bio: true,
+        isAdmin: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 }
