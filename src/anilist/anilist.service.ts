@@ -171,6 +171,12 @@ export class AnilistService {
       // Se non ci sono altre pagine, fermiamo il loop
       if (!pageInfo.hasNextPage) break;
 
+      if (pageInfo.currentPage % 25 === 0) {
+        this.logger.log(`Synced ${synced} ${type} entries so far...`);
+        this.logger.log(`Waiting 5 minutes to avoid hitting rate limits...`);
+        await new Promise((r) => setTimeout(r, 5 * 60 * 1000));
+      }
+
       // Aspettiamo 1 secondo tra una pagina e l'altra per non spammare l'API AniList
       await new Promise((r) => setTimeout(r, 1000));
     }
